@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.back.ms.mapper.news.NewsSettingMapper">
+
+    <resultMap type="com.back.ms.entity.news.NewsSetting" id="newsSettingMap">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="value" column="value"/>
+        <result property="dateUpdate" column="date_update"/>
+        <result property="dateCreate" column="date_create"/>
+        <result property="dateDelete" column="date_delete"/>
+        <result property="version" column="version"/>
+        <result property="del" column="is_del"/>
+    </resultMap>
+
+    <select id="findSummary" resultMap="newsSettingMap" >
+        select * from news_setting
+        where
+          name='newsTypes'
+          and is_del=0
+
+        order by date_update desc
+
+    </select>
+
+    <select id="findNewsImagesSummary" resultMap="newsSettingMap">
+        select * from news_setting
+        where
+            name='newsBanners'
+          and is_del=0
+
+        order by date_update desc
+
+    </select>
+
+
+
+</mapper>

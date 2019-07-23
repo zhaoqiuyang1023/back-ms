@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.back.ms.mapper.news.NewsMapper">
+
+    <resultMap type="com.back.ms.entity.news.News" id="newsMap">
+        <result property="id" column="id"/>
+        <result property="dateUpdate" column="date_update"/>
+        <result property="dateCreate" column="date_create"/>
+        <result property="title" column="title"/>
+        <result property="from" column="from"/>
+        <result property="type" column="type"/>
+        <result property="summary" column="summary"/>
+        <result property="content" column="content"/>
+        <result property="version" column="version"/>
+        <result property="published" column="is_published"/>
+        <result property="dateDelete" column="date_delete"/>
+        <result property="editor" column="editor"/>
+        <result property="index" column="index"/>
+        <result property="del" column="is_del"/>
+        <result property="pic" column="pic"/>
+        <result property="onTop" column="is_on_top"/>
+        <result property="recommendable" column="is_recommendable"/>
+    </resultMap>
+
+
+    <select id="findNewsByPage" resultType="com.back.ms.entity.news.News" >
+        select a.id as id,a.date_update as dateUpdate,a.date_create as dateCreate,a.title as title,
+        a.is_published as published , a.is_recommendable as recommendable,a.shelve as shelve ,b.value as typeName
+        from news a left join news_setting b on a.type=b.id
+        <where>
+            <if test="ao.typeId != null and ao.typeId != '' ">
+                and a.type=#{ao.typeId}
+            </if>
+
+            <if test="ao.shelve != null ">
+                and a.shelve=#{ao.shelve}
+            </if>
+
+            <if test="ao.announce != null">
+                and a.is_published=#{ao.announce}
+            </if>
+
+            <if test="ao.recommendable != null">
+                and a.is_recommendable=#{ao.recommendable}
+            </if>
+
+            <if test="ao.title != null and ao.title != ''">
+                and a.title like  CONCAT('%', #{ao.title} ,'%')
+
+            </if>
+        </where>
+        order by a.date_create desc
+    </select>
+
+
+</mapper>
