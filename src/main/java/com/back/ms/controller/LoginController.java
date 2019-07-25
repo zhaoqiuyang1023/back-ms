@@ -1,6 +1,5 @@
 package com.back.ms.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.back.ms.annotation.SysLog;
 import com.back.ms.base.MySysUser;
 import com.back.ms.entity.Menu;
@@ -38,8 +37,10 @@ import javax.servlet.http.HttpSession;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Controller
 @Slf4j
@@ -187,21 +188,6 @@ public class LoginController {
                 }
             }
         }
-
-        //记录session供旧后台nodejs系统读取
-        String sessionKey = "user_session::" + sessionId;
-        Map userMap = new HashMap();
-        userMap.put("userId", user.getId());
-        userMap.put("loginName", user.getLoginName());
-        userMap.put("nickName", user.getNickName());
-        userMap.put("icon", user.getIcon());
-        userMap.put("salt", user.getSalt());
-        userMap.put("roles", roleSet);
-        userMap.put("permissions", menuSet);
-        userMap.put("permissionsEncryted", permissionsEncryted);
-        String userJson = JSON.toJSONString(userMap);
-        redisTemplate.opsForValue().set(sessionKey, userJson);
-        redisTemplate.expire(sessionKey, SESSION_EXPIRE_HOURS, TimeUnit.HOURS);
     }
 
     @GetMapping("index")

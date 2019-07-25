@@ -27,8 +27,8 @@ import java.util.UUID;
 @Service("localService")
 public class LocalUploadServiceImpl implements UploadService {
 
-//    @Value("${local-upload-filestorage}")
-//    private String fileStorageUrl;
+    @Value("${local-upload-filestorage}")
+    private String fileStorageUrl;
     @Override
     public String upload(MultipartFile file) throws IOException, NoSuchAlgorithmException {
         byte[] data = file.getBytes();
