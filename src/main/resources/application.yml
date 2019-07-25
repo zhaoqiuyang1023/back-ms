@@ -34,7 +34,7 @@ spring:
     charset: UTF-8
   #连接池配置
   datasource:
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: org.sqlite.JDBC
     druid:
       validationQuery: SELECT 1
       initialSize: 10

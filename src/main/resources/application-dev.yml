@@ -15,11 +15,11 @@ spring:
         acknowledge-mode: manual #ack manual
   # 数据源配置
   datasource:
-    url: jdbc:sqlite:D:/back-ms/sqlite/shop.db
-    #url: jdbc:sqlite:/back-ms/static/sqlite/shop.db
+    url: jdbc:sqlite::resource:db/shop.db
     username:
     password:
     driver-class-name: org.sqlite.JDBC
+
 #日志
 logging:
   config: classpath:log/logback.xml
