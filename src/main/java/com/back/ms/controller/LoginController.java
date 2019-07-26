@@ -1,6 +1,5 @@
 package com.back.ms.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.back.ms.annotation.SysLog;
 import com.back.ms.base.MySysUser;
 import com.back.ms.entity.Menu;
@@ -24,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,8 +36,10 @@ import javax.servlet.http.HttpSession;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Controller
 @Slf4j
@@ -53,8 +53,6 @@ public class LoginController {
     @Value("${permissions-encryted}")
     private boolean permissionsEncryted = false;
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
     @Autowired
     protected UserService userService;
 
@@ -187,21 +185,6 @@ public class LoginController {
                 }
             }
         }
-
-        //记录session供旧后台nodejs系统读取
-        String sessionKey = "user_session::" + sessionId;
-        Map userMap = new HashMap();
-        userMap.put("userId", user.getId());
-        userMap.put("loginName", user.getLoginName());
-        userMap.put("nickName", user.getNickName());
-        userMap.put("icon", user.getIcon());
-        userMap.put("salt", user.getSalt());
-        userMap.put("roles", roleSet);
-        userMap.put("permissions", menuSet);
-        userMap.put("permissionsEncryted", permissionsEncryted);
-        String userJson = JSON.toJSONString(userMap);
-        redisTemplate.opsForValue().set(sessionKey, userJson);
-        redisTemplate.expire(sessionKey, SESSION_EXPIRE_HOURS, TimeUnit.HOURS);
     }
 
     @GetMapping("index")
@@ -279,22 +262,6 @@ public class LoginController {
     @GetMapping("systemLogout")
     @SysLog("退出系统")
     public String logOut() {
-        //clean cache
-        ShiroUser currentUser = MySysUser.ShiroUser();
-        String userIdKey = "user::user_id_" + currentUser.getId();
-        this.redisTemplate.delete(userIdKey);
-        String userNameKey = "user::user_name_" + currentUser.getLoginName();
-        this.redisTemplate.delete(userNameKey);
-
-        String rolekey = "user_roles::" + currentUser.getLoginName();
-        this.redisTemplate.delete(rolekey);
-        String permissionKey = "user_permissions::" + currentUser.getLoginName();
-        this.redisTemplate.delete(permissionKey);
-        String menuKey = "allMenus::user_menu_" + currentUser.getId();
-        this.redisTemplate.delete(menuKey);
-        String sessionKey = "user_session::" + SecurityUtils.getSubject().getSession().getId();
-        this.redisTemplate.delete(sessionKey);
-
         SecurityUtils.getSubject().logout();
         return "redirect:/login";
     }

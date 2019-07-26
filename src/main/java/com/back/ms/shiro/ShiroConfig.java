@@ -12,14 +12,10 @@ import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
-import org.crazycake.shiro.RedisCacheManager;
-import org.crazycake.shiro.RedisManager;
-import org.crazycake.shiro.RedisSessionDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,14 +30,6 @@ import java.util.Map;
 public class ShiroConfig {
     private Logger  logger = LoggerFactory.getLogger(ShiroConfig.class);
 
-    @Value("${spring.redis.host}")
-    private String jedisHost;
-
-    @Value("${spring.redis.port}")
-    private Integer jedisPort;
-
-    @Value("${spring.redis.password}")
-    private String jedisPassword;
 
 
     @Bean
@@ -84,7 +72,6 @@ public class ShiroConfig {
         defaultWebSecurityManager.setRealm(authRealm);
         defaultWebSecurityManager.setRememberMeManager(rememberMeManager());
         defaultWebSecurityManager.setSessionManager(webSessionManager());
-        defaultWebSecurityManager.setCacheManager(cacheManager());
         return defaultWebSecurityManager;
     }
 
@@ -105,7 +92,6 @@ public class ShiroConfig {
         CookieRememberMeManager rememberMeManager = new CookieRememberMeManager();
         rememberMeManager.setCookie(rememberMeCookie());
         rememberMeManager.setCipherKey(Base64.decode("2AvVhdsgUs0FSA3SDFAdag=="));
-        //rememberMeManager.setCipherKey(Base64.decode("9fuewUf398nkLamof4wPim=="));
         return rememberMeManager;
     }
 
@@ -152,36 +138,24 @@ public class ShiroConfig {
         //设置session过期时间为1小时(单位：毫秒)，默认为30分钟
         manager.setGlobalSessionTimeout(60 * 60 * 1000);
         manager.setSessionValidationSchedulerEnabled(true);
-        manager.setSessionDAO(redisSessionDAO());
+    //    manager.setSessionDAO(redisSessionDAO());
         manager.setSessionIdCookie(sessionIdCookie());
         manager.setSessionIdCookieEnabled(true);
         manager.setSessionIdUrlRewritingEnabled(false);
         return manager;
     }
 
-    @Bean
-    public RedisManager redisManager(){
-        RedisManager manager = new RedisManager();
-        manager.setHost(jedisHost);
-        manager.setPort(jedisPort);
-        //这里是用户session的时长 跟上面的setGlobalSessionTimeout 应该保持一直（上面是1个小时 下面是秒做单位的 我们设置成3600）
-        manager.setExpire(60 * 60);
-        manager.setPassword(jedisPassword);
-        return manager;
-    }
+//
+//    @Bean
+//    public RedisSessionDAO redisSessionDAO(){
+//        RedisSessionDAO sessionDAO = new RedisSessionDAO();
+//        sessionDAO.setKeyPrefix("wl_");
+//        return sessionDAO;
+//    }
 
-    @Bean
-    public RedisSessionDAO redisSessionDAO(){
-        RedisSessionDAO sessionDAO = new RedisSessionDAO();
-        sessionDAO.setKeyPrefix("wl_");
-        sessionDAO.setRedisManager(redisManager());
-        return sessionDAO;
-    }
-
-    @Bean("myCacheManager")
-    public RedisCacheManager cacheManager(){
-        RedisCacheManager manager = new RedisCacheManager();
-        manager.setRedisManager(redisManager());
-        return manager;
-    }
+//    @Bean("myCacheManager")
+//    public RedisCacheManager cacheManager(){
+//        RedisCacheManager manager = new RedisCacheManager();
+//        return manager;
+//    }
 }
