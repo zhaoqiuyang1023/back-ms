@@ -1,16 +1,14 @@
 package com.back.ms.service.impl;
 
-import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.back.ms.entity.Rescource;
 import com.back.ms.entity.UploadInfo;
+import com.back.ms.exception.MyException;
 import com.back.ms.service.UploadService;
-import com.back.ms.util.HttpUtils;
 import com.back.ms.util.QETag;
 import com.back.ms.util.RestResponse;
-import com.back.ms.exception.MyException;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.xiaoleilu.hutool.util.RandomUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,55 +18,13 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 @Service("localService")
 public class LocalUploadServiceImpl implements UploadService {
 
-    @Value("${local-upload-filestorage}")
-    private String fileStorageUrl;
-    @Override
-    public String upload(MultipartFile file) throws IOException, NoSuchAlgorithmException {
-        byte[] data = file.getBytes();
-        QETag tag = new QETag();
-        Rescource rescource = new Rescource();
-        String hash = tag.calcETag(file);
-        EntityWrapper<RestResponse> wrapper = new EntityWrapper<>();
-        wrapper.eq("hash",hash);
-        wrapper.eq("source","local");
-        rescource = rescource.selectOne(wrapper);
-        if( rescource!= null){
-            return rescource.getWebUrl();
-        }
-        String extName = file.getOriginalFilename().substring(
-                file.getOriginalFilename().lastIndexOf("."));
-        String fileName = UUID.randomUUID() + extName;
-        String contentType = file.getContentType();
-        Map<String, Object> resultMap = HttpUtils.uploadFile(fileStorageUrl, file);
-//        StringBuffer sb = new StringBuffer(ResourceUtils.getURL("classpath:").getPath());
-//        String filePath = sb.append("static/upload/").toString();
-//        File targetFile = new File(filePath);
-//        if(!targetFile.exists()){
-//            targetFile.mkdirs();
-//        }
-//        FileOutputStream out = new FileOutputStream(filePath+fileName);
-//        out.write(data);
-//        out.flush();
-//        out.close();
-        String webUrl = Objects.toString(resultMap.get("url"),StringUtils.EMPTY);
-        rescource = new Rescource();
-        rescource.setFileName(fileName);
-        rescource.setFileSize(new java.text.DecimalFormat("#.##").format(file.getSize()/1024)+"kb");
-        rescource.setHash(hash);
-        rescource.setFileType(contentType);
-        rescource.setWebUrl(webUrl);
-        rescource.setSource("local");
-        rescource.insert();
-        return webUrl;
-    }
-    //backup
+
+    //    @Override
 //    public String upload(MultipartFile file) throws IOException, NoSuchAlgorithmException {
 //        byte[] data = file.getBytes();
 //        QETag tag = new QETag();
@@ -85,6 +41,7 @@ public class LocalUploadServiceImpl implements UploadService {
 //                file.getOriginalFilename().lastIndexOf("."));
 //        String fileName = UUID.randomUUID() + extName;
 //        String contentType = file.getContentType();
+//       Map<String, Object> resultMap = HttpUtils.uploadFile(fileStorageUrl, file);
 //        StringBuffer sb = new StringBuffer(ResourceUtils.getURL("classpath:").getPath());
 //        String filePath = sb.append("static/upload/").toString();
 //        File targetFile = new File(filePath);
@@ -95,7 +52,7 @@ public class LocalUploadServiceImpl implements UploadService {
 //        out.write(data);
 //        out.flush();
 //        out.close();
-//        String webUrl = "/static/upload/"+fileName;
+//        String webUrl = Objects.toString(resultMap.get("url"),StringUtils.EMPTY);
 //        rescource = new Rescource();
 //        rescource.setFileName(fileName);
 //        rescource.setFileSize(new java.text.DecimalFormat("#.##").format(file.getSize()/1024)+"kb");
@@ -106,17 +63,55 @@ public class LocalUploadServiceImpl implements UploadService {
 //        rescource.insert();
 //        return webUrl;
 //    }
-
+    //backup
+    @Override
+    public String upload(MultipartFile file) throws IOException, NoSuchAlgorithmException {
+        byte[] data = file.getBytes();
+        QETag tag = new QETag();
+        Rescource rescource = new Rescource();
+        String hash = tag.calcETag(file);
+        EntityWrapper<RestResponse> wrapper = new EntityWrapper<>();
+        wrapper.eq("hash", hash);
+        wrapper.eq("source", "local");
+        rescource = rescource.selectOne(wrapper);
+        if (rescource != null) {
+            return rescource.getWebUrl();
+        }
+        String extName = file.getOriginalFilename().substring(
+                file.getOriginalFilename().lastIndexOf("."));
+        String fileName = UUID.randomUUID() + extName;
+        String contentType = file.getContentType();
+        StringBuffer sb = new StringBuffer(ResourceUtils.getURL("classpath:").getPath());
+        String filePath = sb.append("static/upload/").toString();
+        File targetFile = new File(filePath);
+        if (!targetFile.exists()) {
+            targetFile.mkdirs();
+        }
+        FileOutputStream out = new FileOutputStream(filePath + fileName);
+        out.write(data);
+        out.flush();
+        out.close();
+        String webUrl = "/static/upload/" + fileName;
+        rescource = new Rescource();
+        rescource.setFileName(fileName);
+        rescource.setFileSize(new java.text.DecimalFormat("#.##").format(file.getSize() / 1024) + "kb");
+        rescource.setHash(hash);
+        rescource.setFileType(contentType);
+        rescource.setWebUrl(webUrl);
+        rescource.setSource("local");
+        rescource.insert();
+        return webUrl;
+    }
 
 
     @Override
     public Boolean delete(String path) {
-        path = path.replaceFirst("\\/","classpath:");
+        path = path.replaceFirst("\\/", "classpath:");
         File file = new File(path);
-        if(file.exists()){
+        if (file.exists()) {
             file.delete();
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -125,10 +120,10 @@ public class LocalUploadServiceImpl implements UploadService {
     public String uploadNetFile(String url) throws IOException, NoSuchAlgorithmException {
         Rescource rescource = new Rescource();
         EntityWrapper<RestResponse> wrapper = new EntityWrapper<>();
-        wrapper.eq("original_net_url",url);
-        wrapper.eq("source","local");
+        wrapper.eq("original_net_url", url);
+        wrapper.eq("source", "local");
         rescource = rescource.selectOne(wrapper);
-        if(rescource != null){
+        if (rescource != null) {
             return rescource.getWebUrl();
         }
         String extName = url.substring(url.lastIndexOf("."));
@@ -136,27 +131,27 @@ public class LocalUploadServiceImpl implements UploadService {
         StringBuffer sb = new StringBuffer(ResourceUtils.getURL("classpath:").getPath());
         String filePath = sb.append("static/upload/").toString();
         File uploadDir = new File(filePath);
-        if(!uploadDir.exists()){
+        if (!uploadDir.exists()) {
             uploadDir.mkdirs();
         }
-        URL neturl=new URL(url);
-        HttpURLConnection conn=(HttpURLConnection)neturl.openConnection();
+        URL neturl = new URL(url);
+        HttpURLConnection conn = (HttpURLConnection) neturl.openConnection();
         conn.connect();
         BufferedInputStream br = new BufferedInputStream(conn.getInputStream());
         byte[] buf = new byte[1024];
         int len = 0;
-        FileOutputStream out = new FileOutputStream(filePath+fileName);
+        FileOutputStream out = new FileOutputStream(filePath + fileName);
         while ((len = br.read(buf)) > 0) out.write(buf, 0, len);
-        File targetFile = new File(filePath+fileName);
+        File targetFile = new File(filePath + fileName);
         String webUrl = "";
-        if(targetFile.exists()){
-            webUrl = "/static/upload/"+fileName;
+        if (targetFile.exists()) {
+            webUrl = "/static/upload/" + fileName;
             rescource = new Rescource();
             QETag tag = new QETag();
             rescource.setFileName(fileName);
-            rescource.setFileSize(new java.text.DecimalFormat("#.##").format(br.read(buf)/1024)+"kb");
+            rescource.setFileSize(new java.text.DecimalFormat("#.##").format(br.read(buf) / 1024) + "kb");
             rescource.setHash(tag.calcETag(targetFile));
-            rescource.setFileType(StringUtils.isBlank(extName)?"unknown":extName);
+            rescource.setFileType(StringUtils.isBlank(extName) ? "unknown" : extName);
             rescource.setWebUrl(webUrl);
             rescource.setOriginalNetUrl(url);
             rescource.setSource("local");
@@ -172,7 +167,7 @@ public class LocalUploadServiceImpl implements UploadService {
     @Override
     public String uploadLocalImg(String localPath) {
         File file = new File(localPath);
-        if(!file.exists()){
+        if (!file.exists()) {
             throw new MyException("本地文件不存在");
         }
         QETag tag = new QETag();
@@ -186,9 +181,9 @@ public class LocalUploadServiceImpl implements UploadService {
         }
         Rescource rescource = new Rescource();
         EntityWrapper<RestResponse> wrapper = new EntityWrapper<>();
-        wrapper.eq("hash",hash);
+        wrapper.eq("hash", hash);
         rescource = rescource.selectOne(wrapper);
-        if( rescource!= null){
+        if (rescource != null) {
             return rescource.getWebUrl();
         }
         StringBuffer sb = null;
@@ -200,12 +195,12 @@ public class LocalUploadServiceImpl implements UploadService {
         String filePath = sb.append("static/upload/").toString();
         StringBuffer name = new StringBuffer(RandomUtil.randomUUID());
         StringBuffer returnUrl = new StringBuffer("/static/upload/");
-        String  extName = "";
+        String extName = "";
         extName = file.getName().substring(
                 file.getName().lastIndexOf("."));
         sb.append(name).append(extName);
         File uploadDir = new File(filePath);
-        if(!uploadDir.exists()){
+        if (!uploadDir.exists()) {
             uploadDir.mkdir();
         }
         try {
@@ -228,24 +223,21 @@ public class LocalUploadServiceImpl implements UploadService {
 
     @Override
     public String uploadBase64(String base64) {
-        StringBuffer webUrl=new StringBuffer("/static/upload/");
+        StringBuffer webUrl = new StringBuffer("/static/upload/");
         BASE64Decoder decoder = new BASE64Decoder();
-        try
-        {
+        try {
             //Base64解码
             byte[] b = decoder.decodeBuffer(base64);
-            for(int i=0;i<b.length;++i)
-            {
-                if(b[i]<0)
-                {//调整异常数据
-                    b[i]+=256;
+            for (int i = 0; i < b.length; ++i) {
+                if (b[i] < 0) {//调整异常数据
+                    b[i] += 256;
                 }
             }
             //生成jpeg图片
             StringBuffer ss = new StringBuffer(ResourceUtils.getURL("classpath:").getPath());
             String filePath = ss.append("static/upload/").toString();
             File targetFileDir = new File(filePath);
-            if(!targetFileDir.exists()){
+            if (!targetFileDir.exists()) {
                 targetFileDir.mkdirs();
             }
             StringBuffer sb = new StringBuffer(filePath);
@@ -258,9 +250,7 @@ public class LocalUploadServiceImpl implements UploadService {
             out.flush();
             out.close();
             return webUrl.append(sb).toString();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             return null;
         }
     }

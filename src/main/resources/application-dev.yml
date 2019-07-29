@@ -1,6 +1,8 @@
 server:
   #端口
   port: 4567
+  http2:
+    enabled: true
 spring:
   rabbitmq:
     host: 39.104.124.39
@@ -51,5 +53,3 @@ permissions-encryted: false
 #adms报表任务访问根地址
 adms.reportJob.url: http://adms.e-ports-ms.com:8080/reportJob/count
 
-#上传文件至filestorage
-local-upload-filestorage: http://192.168.30.98:10236/filestorage/uploadFilesAndSave
