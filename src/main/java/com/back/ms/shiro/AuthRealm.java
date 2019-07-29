@@ -1,13 +1,14 @@
 package com.back.ms.shiro;
 
-import com.back.ms.entity.Menu;
-import com.back.ms.entity.Role;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.back.ms.base.MySysUser;
 import com.back.ms.entity.User;
 import com.back.ms.service.UserService;
 import com.back.ms.util.AESUtil;
 import com.back.ms.util.Constants;
 import com.back.ms.util.Encodes;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
@@ -35,50 +36,50 @@ public class AuthRealm extends AuthorizingRealm {
 
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
-//        String key = "user_session::" + MySysUser.getSessionId();
-//        ValueOperations<String, String> valueOperations = this.redisTemplate.opsForValue();
-//        String text = valueOperations.get(key);
-//        JSONObject jsonObject = JSON.parseObject(text);
-//        JSONArray permissionArray = jsonObject.getJSONArray("permissions");
+        String key = "user_session::" + MySysUser.getSessionId();
+        ValueOperations<String, String> valueOperations = this.redisTemplate.opsForValue();
+        String text = valueOperations.get(key);
+        JSONObject jsonObject = JSON.parseObject(text);
+        JSONArray permissionArray = jsonObject.getJSONArray("permissions");
+
+        JSONArray roleArray = jsonObject.getJSONArray("roles");
+        Set<String> roles = new LinkedHashSet<>(roleArray.toJavaList(String.class));
+
+        Set<String> permissions;
+        Boolean permissionsEncryted = jsonObject.getBoolean("permissionsEncryted");
+        if (permissionsEncryted != null && permissionsEncryted) {
+            ShiroUser shiroUser = MySysUser.ShiroUser();
+            permissions = new LinkedHashSet<>(permissionArray.size());
+            for (Object p : permissionArray) {
+                permissions.add(AESUtil.decrypt((String) p, shiroUser.getSalt()));
+            }
+        } else {
+            permissions = new LinkedHashSet<>(permissionArray.toJavaList(String.class));
+        }
+
+//        SimpleAuthenticationInfo simpleAuthenticationInfo=  (SimpleAuthenticationInfo) principalCollection.getPrimaryPrincipal();
+//        ShiroUser shiroUser= (ShiroUser) simpleAuthenticationInfo.getPrincipals().getPrimaryPrincipal();
+//        User user = userService.findUserByLoginName(shiroUser.getLoginName());
 //
-//        JSONArray roleArray = jsonObject.getJSONArray("roles");
-//        Set<String> roles = new LinkedHashSet<>(roleArray.toJavaList(String.class));
-//
-//        Set<String> permissions;
-//        Boolean permissionsEncryted = jsonObject.getBoolean("permissionsEncryted");
-//        if (permissionsEncryted != null && permissionsEncryted) {
-//            ShiroUser shiroUser = MySysUser.ShiroUser();
-//            permissions = new LinkedHashSet<>(permissionArray.size());
-//            for (Object p : permissionArray) {
-//                permissions.add(AESUtil.decrypt((String) p, shiroUser.getSalt()));
+//        Set<Role> roles = user.getRoleLists();
+//        Set roleSet = new LinkedHashSet();
+//        for (Role role : roles) {
+//            if (StringUtils.isNotBlank(role.getName())) {
+//                roleSet.add(role.getName());
 //            }
-//        } else {
-//            permissions = new LinkedHashSet<>(permissionArray.toJavaList(String.class));
 //        }
-
-        SimpleAuthenticationInfo simpleAuthenticationInfo=  (SimpleAuthenticationInfo) principalCollection.getPrimaryPrincipal();
-        ShiroUser shiroUser= (ShiroUser) simpleAuthenticationInfo.getPrincipals().getPrimaryPrincipal();
-        User user = userService.findUserByLoginName(shiroUser.getLoginName());
-
-        Set<Role> roles = user.getRoleLists();
-        Set roleSet = new LinkedHashSet();
-        for (Role role : roles) {
-            if (StringUtils.isNotBlank(role.getName())) {
-                roleSet.add(role.getName());
-            }
-        }
-        Set<Menu> menus = user.getMenus();
-        Set menuSet = new LinkedHashSet();
-        for (Menu menu : menus) {
-            if (StringUtils.isNotBlank(menu.getPermission())) {
-                String aesPermission = AESUtil.encrypt(menu.getPermission(), user.getSalt());
-                if (permissionsEncryted) {
-                    menuSet.add(aesPermission);
-                } else {
-                    menuSet.add(menu.getPermission());
-                }
-            }
-        }
+//        Set<Menu> menus = user.getMenus();
+//        Set menuSet = new LinkedHashSet();
+//        for (Menu menu : menus) {
+//            if (StringUtils.isNotBlank(menu.getPermission())) {
+//                String aesPermission = AESUtil.encrypt(menu.getPermission(), user.getSalt());
+//                if (permissionsEncryted) {
+//                    menuSet.add(aesPermission);
+//                } else {
+//                    menuSet.add(menu.getPermission());
+//                }
+//            }
+//        }
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
         info.setRoles(roleSet);
         info.setStringPermissions(menuSet);

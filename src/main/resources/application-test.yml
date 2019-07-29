@@ -53,6 +53,3 @@ permissions-encryted: false
 
 #adms报表任务访问根地址
 adms.reportJob.url: http://adms.e-ports-ms.com:8080/reportJob/count
-
-#上传文件至filestorage
-local-upload-filestorage: http://192.168.30.166:10236/filestorage/uploadFilesAndSave
