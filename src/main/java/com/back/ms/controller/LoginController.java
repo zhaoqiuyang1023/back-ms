@@ -33,6 +33,7 @@ import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.PushBuilder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -81,6 +82,7 @@ public class LoginController {
 
     @GetMapping("login")
     public String login(HttpServletRequest request) {
+
         LOGGER.info("跳到这边的路径为:" + request.getRequestURI());
         Subject s = SecurityUtils.getSubject();
         LOGGER.info("是否记住登录--->" + s.isRemembered() + "<-----是否有权限登录----->" + s.isAuthenticated() + "<----");
@@ -264,6 +266,19 @@ public class LoginController {
     public String logOut() {
         SecurityUtils.getSubject().logout();
         return "redirect:/login";
+    }
+
+    @GetMapping("push")
+    @ResponseBody
+    public String logOut(HttpServletRequest request) {
+        PushBuilder pushBuilder = request.newPushBuilder();
+        System.out.println(pushBuilder);
+        if (pushBuilder != null) {
+            pushBuilder.path("resources/static/images/bg1.jpg").push();
+            pushBuilder.path("resources/static/images/bg2.png").push();
+            System.out.println("123");
+        }
+        return "123";
     }
 }
 
